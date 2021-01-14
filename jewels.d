@@ -24,6 +24,7 @@ import vibe.stream.operations;
 static immutable MOD = "increasedrarityofitemsfound";
 static immutable IDS = [1, 2, 5, 6];
 static immutable LEAGUE = "Standard";
+static immutable ONLINE_ONLY = true;
 static immutable DELAY = 20.seconds;
 
 struct Jewel
@@ -138,8 +139,12 @@ void main()
     {
         requestHTTP(getApiUrl(), (scope req) {
             req.method = HTTPMethod.POST;
-            Json body = parseJsonString(
-                `{"query": {"stats":[{"type":"count","value":{"min":1},"filters":[]}]}}`);
+            Json body = parseJsonString(`{"query": {"stats":[{"type":"count","value":{"min":1},"filters":[]}]}}`);
+            static if (ONLINE_ONLY)
+            {
+                body["query"]["status"] = Json.emptyObject;
+                body["query"]["status"]["option"] = "online";
+            }
             body["query"]["stats"][0]["filters"] ~= jewel.toFilter();
             req.writeJsonBody(body);
         }, (scope res) {
